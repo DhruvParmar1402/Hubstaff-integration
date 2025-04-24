@@ -6,6 +6,7 @@ import com.hubstaff.integration.entity.OrganizationEntity;
 import com.hubstaff.integration.exception.ExternalApiException;
 import com.hubstaff.integration.repository.OrganizationRepository;
 import com.hubstaff.integration.service.token.TokenServiceImpl;
+import com.hubstaff.integration.util.CollectionsUtil;
 import com.hubstaff.integration.util.ObjectUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +37,7 @@ public class OrganizationServiceImpl implements OrganizationServiceInterface {
     private ModelMapper mapper;
     private RestTemplate restTemplate;
     private OrganizationRepository organizationRepository;
+    private final CollectionsUtil<OrganizationDTO> util = new CollectionsUtil<>();
 
     public OrganizationServiceImpl(TokenServiceImpl tokenServiceImpl, ModelMapper modelMapper, RestTemplate restTemplate, OrganizationRepository organizationRepository)
     {
@@ -79,6 +81,8 @@ public class OrganizationServiceImpl implements OrganizationServiceInterface {
                 body == null || ObjectUtil.isNullOrEmpty(body.getOrganizations())
                         ? new ArrayList<>()
                         : body.getOrganizations();
+
+        organizations= util.filterFromPreviousDay(organizations, OrganizationDTO::getCreatedAt);
 
         for (OrganizationDTO organization : organizations) {
             organizationRepository.save(mapper.map(organization,OrganizationEntity.class));

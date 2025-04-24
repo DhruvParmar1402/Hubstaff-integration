@@ -4,6 +4,7 @@ import com.hubstaff.integration.dto.OrganizationDTO;
 import com.hubstaff.integration.service.organization.OrganizationServiceImpl;
 import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ResponseHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/organizations")
 public class OrganizationController {
@@ -36,6 +38,7 @@ public class OrganizationController {
         }
         catch (Exception e)
         {
+            log.error(e.getMessage());
             response=new ResponseHandler<>(null,e.getMessage(),HttpStatus.BAD_REQUEST,false);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }

@@ -35,7 +35,6 @@ public class UserRepository {
                 .withScanIndexForward(false)
                 .withConsistentRead(false);
 
-        List<UserEntity> users=repo.query(UserEntity.class,expression);
-        return users;
+        return repo.query(UserEntity.class,expression);
     }
 }

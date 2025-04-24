@@ -10,7 +10,6 @@ import com.hubstaff.integration.repository.ActivityRepository;
 import com.hubstaff.integration.service.application.ApplicationServiceImpl;
 import com.hubstaff.integration.service.organization.OrganizationServiceImpl;
 import com.hubstaff.integration.service.token.TokenServiceImpl;
-import com.hubstaff.integration.util.CollectionsUtil;
 import com.hubstaff.integration.util.ObjectUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +26,6 @@ import org.springframework.web.client.RestTemplate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -60,7 +58,6 @@ public class ActivityServiceImpl implements ActivityServiceInterface {
     public void fetchAndSaveActivities() {
 
         List<OrganizationDTO> organizations = organizationServiceImpl.getOrganizations();
-        CollectionsUtil<ActivityDTO> util=new CollectionsUtil<>();
 
         LocalDate yesterday = LocalDate.now(ZoneOffset.UTC).minusDays(1);
 
@@ -99,6 +96,8 @@ public class ActivityServiceImpl implements ActivityServiceInterface {
                 }
 
                 activities = response.getBody().getActivities();
+
+                System.out.println(activities);
 
                 for (ActivityDTO activity : activities) {
                     activity.setOrganizationId(organization.getOrganizationId());

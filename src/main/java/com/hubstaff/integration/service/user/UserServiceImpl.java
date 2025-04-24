@@ -32,7 +32,7 @@ public class UserServiceImpl implements UserServiceInterface {
     private final TokenServiceImpl tokenServiceImpl;
     private final RestTemplate restTemplate;
     private final ModelMapper mapper;
-    private CollectionsUtil<UserDTO> util = new CollectionsUtil<>();
+    private final CollectionsUtil<UserDTO> util = new CollectionsUtil<>();
 
     public UserServiceImpl(UserRepository userRepository, OrganizationServiceImpl organizationServiceImpl, TokenServiceImpl tokenServiceImpl, RestTemplate restTemplate, ModelMapper mapper) {
         this.userRepository = userRepository;
@@ -55,7 +55,6 @@ public class UserServiceImpl implements UserServiceInterface {
         List<OrganizationDTO> organizations = organizationServiceImpl.getOrganizations();
         String token = tokenServiceImpl.getAccessToken();
 
-        // Defensive check on token and organizations
         if (ObjectUtil.isNullOrEmpty(token) || ObjectUtil.isNullOrEmpty(organizations)) {
             return;
         }
@@ -66,12 +65,6 @@ public class UserServiceImpl implements UserServiceInterface {
 
         try {
             for (OrganizationDTO organization : organizations) {
-
-                // Null-safety check for OrganizationDTO content
-                if (ObjectUtil.isNullOrEmpty(organization.getOrganizationId())) {
-                    continue;
-                }
-
                 String finalUrl = baseUrl + fetchOrganizationUrl + "/" + organization.getOrganizationId() + fetchUserUrl;
 
                 ResponseEntity<UserResponse> response = restTemplate.exchange(
@@ -81,19 +74,17 @@ public class UserServiceImpl implements UserServiceInterface {
                         UserResponse.class
                 );
 
-                // Check for null body or null/empty user list
                 if (ObjectUtil.isNullOrEmpty(response.getBody()) || ObjectUtil.isNullOrEmpty(response.getBody().getUsers())) {
                     continue;
                 }
 
                 List<UserDTO> users = response.getBody().getUsers();
 
-                // Optional: filter based on creation date if required
                 users = util.filterFromPreviousDay(users, UserDTO::getCreatedAt);
 
                 for (UserDTO user : users) {
                     if (!ObjectUtil.validateDto(user)) {
-                        continue; // skip invalid user DTOs
+                        continue;
                     }
 
                     user.setOrganizationId(organization.getOrganizationId());

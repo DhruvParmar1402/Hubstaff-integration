@@ -3,7 +3,6 @@ package com.hubstaff.integration.util;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.function.Function;
 
 public class CollectionsUtil<T> {
@@ -30,6 +29,6 @@ public class CollectionsUtil<T> {
                         return false;
                     }
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 }

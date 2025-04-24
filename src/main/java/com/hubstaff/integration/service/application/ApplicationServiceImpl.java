@@ -3,7 +3,6 @@ package com.hubstaff.integration.service.application;
 import com.hubstaff.integration.dto.ApplicationDTO;
 import com.hubstaff.integration.entity.ApplicationEntity;
 import com.hubstaff.integration.exception.EntityNotFound;
-import com.hubstaff.integration.repository.ActivityRepository;
 import com.hubstaff.integration.repository.ApplicationRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -14,13 +13,11 @@ import java.util.List;
 public class ApplicationServiceImpl implements ApplicationServiceInterface{
 
     private final ApplicationRepository applicationRepository;
-    private final ActivityRepository activityRepository;
     private final ModelMapper mapper;
 
-    public ApplicationServiceImpl(ApplicationRepository applicationRepository, ActivityRepository activityRepository, ModelMapper modelMapper)
+    public ApplicationServiceImpl(ApplicationRepository applicationRepository, ModelMapper modelMapper)
     {
         this.applicationRepository=applicationRepository;
-        this.activityRepository=activityRepository;
         this.mapper=modelMapper;
     }
 

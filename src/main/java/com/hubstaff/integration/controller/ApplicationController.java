@@ -6,6 +6,7 @@ import com.hubstaff.integration.service.application.ApplicationServiceImpl;
 import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ResponseHandler;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @Validated
 @RequestMapping("/application")
@@ -37,11 +39,13 @@ public class ApplicationController {
         }
         catch (EntityNotFound e)
         {
+            log.error(e.getMessage());
             response=new ResponseHandler<>(null,e.getMessage(),HttpStatus.BAD_REQUEST,true);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
         catch (Exception e)
         {
+            log.error(e.getMessage());
             response=new ResponseHandler<>(null,e.getMessage(),HttpStatus.BAD_REQUEST,false);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }

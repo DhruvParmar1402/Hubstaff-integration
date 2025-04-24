@@ -17,8 +17,7 @@ public class OrganizationScheduler {
         this.organizationServiceImpl = organizationServiceImpl;
     }
 
-//    @Scheduled(cron = "0 0 0 * * *")
-@Scheduled(fixedRate = 5000)
+    @Scheduled(cron = "0 0 0 * * *")
     public void fetchAndSaveOrganizations()
     {
         logger.info("Organization scheduler executed.");

@@ -4,10 +4,12 @@ import com.hubstaff.integration.dto.IntegrationDTO;
 import com.hubstaff.integration.service.token.TokenServiceImpl;
 import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ResponseHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/tokens")
 public class TokenController {
@@ -32,6 +34,7 @@ public class TokenController {
         }
         catch (Exception e)
         {
+            log.error(e.getMessage());
             response=new ResponseHandler<>(null, e.getMessage(),HttpStatus.BAD_REQUEST,false);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
@@ -47,6 +50,7 @@ public class TokenController {
         }
         catch (Exception e)
         {
+            log.error(e.getMessage());
             response=new ResponseHandler<>(null,e.getMessage(),HttpStatus.BAD_REQUEST,false);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }

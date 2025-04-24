@@ -17,8 +17,7 @@ public class ActivitiesSchedulers {
         this.activityServiceImpl = activityServiceImpl;
     }
 
-//    @Scheduled(cron = "0 0 0 * * *")
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(cron = "0 0 0 * * *")
     public void fetchAndSaveActivities()
     {
         logger.info("Application activity schedulers executed.");

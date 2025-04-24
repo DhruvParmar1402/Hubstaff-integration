@@ -18,8 +18,7 @@ public class UserScheduler {
         this.userServiceImpl = userServiceImpl;
     }
 
-//    @Scheduled(cron = "0 0 0 * * *")
-@Scheduled(fixedRate = 5000)
+    @Scheduled(cron = "0 0 0 * * *")
     public void fetchAndSaveUsers()
 
     {

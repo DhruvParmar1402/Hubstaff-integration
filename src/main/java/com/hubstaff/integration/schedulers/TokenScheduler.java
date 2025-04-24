@@ -19,8 +19,7 @@ public class TokenScheduler {
         this.tokenServiceImpl = tokenServiceImpl;
     }
 
-//    @Scheduled(fixedRate =  60 * 60 * 1000)
-@Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate =  60 * 60 * 1000)
     public void getNewAccessToken()
     {
         logger.info("Token scheduler executed.");
