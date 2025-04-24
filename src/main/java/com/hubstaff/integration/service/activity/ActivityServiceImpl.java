@@ -64,11 +64,7 @@ public class ActivityServiceImpl implements ActivityServiceInterface {
 
         LocalDate yesterday = LocalDate.now(ZoneOffset.UTC).minusDays(1);
 
-//        ZonedDateTime dayStart = yesterday.atStartOfDay(ZoneOffset.UTC);
-        ZonedDateTime dayStart = ZonedDateTime.now(ZoneOffset.UTC)
-                .minusDays(13)
-                .toLocalDate()
-                .atStartOfDay(ZoneOffset.UTC);
+        ZonedDateTime dayStart = yesterday.atStartOfDay(ZoneOffset.UTC);
 
         ZonedDateTime dayEnd = yesterday.atTime(23, 59, 59).atZone(ZoneOffset.UTC);
 
@@ -103,7 +99,6 @@ public class ActivityServiceImpl implements ActivityServiceInterface {
                 }
 
                 activities = response.getBody().getActivities();
-                activities=util.filterFromPreviousDay(activities,ActivityDTO::getCreatedAt);
 
                 for (ActivityDTO activity : activities) {
                     activity.setOrganizationId(organization.getOrganizationId());
