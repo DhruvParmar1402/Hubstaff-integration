@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserServiceInterface {
     private final TokenServiceImpl tokenServiceImpl;
     private final RestTemplate restTemplate;
     private final ModelMapper mapper;
-    private CollectionsUtil<UserDTO>util=new CollectionsUtil<>();
+    private CollectionsUtil<UserDTO> util = new CollectionsUtil<>();
 
     public UserServiceImpl(UserRepository userRepository, OrganizationServiceImpl organizationServiceImpl, TokenServiceImpl tokenServiceImpl, RestTemplate restTemplate, ModelMapper mapper) {
         this.userRepository = userRepository;
@@ -56,35 +56,48 @@ public class UserServiceImpl implements UserServiceInterface {
         List<OrganizationDTO> organizations = organizationServiceImpl.getOrganizations();
         String token = tokenServiceImpl.getAccessToken();
 
-        if(ObjectUtil.isNullOrEmpty(token) || ObjectUtil.isNullOrEmpty(organizations))
-        {
+        // Defensive check on token and organizations
+        if (ObjectUtil.isNullOrEmpty(token) || ObjectUtil.isNullOrEmpty(organizations)) {
             return;
         }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
-
         HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
 
         try {
             for (OrganizationDTO organization : organizations) {
-                Integer organizationId = organization.getOrganizationId();
-                ResponseEntity<UserResponse> response;
 
-                String finalUrl=baseUrl + fetchOrganizationUrl + "/" + organizationId.toString() + fetchUserUrl;
-                response = restTemplate.exchange(
-                         finalUrl
-                        , HttpMethod.GET
-                        , requestEntity
-                        , UserResponse.class
+                // Null-safety check for OrganizationDTO content
+                if (ObjectUtil.isNullOrEmpty(organization.getOrganizationId())) {
+                    continue;
+                }
+
+                String finalUrl = baseUrl + fetchOrganizationUrl + "/" + organization.getOrganizationId() + fetchUserUrl;
+
+                ResponseEntity<UserResponse> response = restTemplate.exchange(
+                        finalUrl,
+                        HttpMethod.GET,
+                        requestEntity,
+                        UserResponse.class
                 );
 
-                List<UserDTO> users = response.getBody() == null ? new ArrayList<>() : response.getBody().getUsers();
+                // Check for null body or null/empty user list
+                if (ObjectUtil.isNullOrEmpty(response.getBody()) || ObjectUtil.isNullOrEmpty(response.getBody().getUsers())) {
+                    continue;
+                }
 
-                users=util.filterFromPreviousDay(users,UserDTO::getCreatedAt);
+                List<UserDTO> users = response.getBody().getUsers();
+
+                // Optional: filter based on creation date if required
+                users = util.filterFromPreviousDay(users, UserDTO::getCreatedAt);
 
                 for (UserDTO user : users) {
-                    user.setOrganizationId(organizationId);
+                    if (!ObjectUtil.validateDto(user)) {
+                        continue; // skip invalid user DTOs
+                    }
+
+                    user.setOrganizationId(organization.getOrganizationId());
                     user.setOrganizationName(organization.getOrganizationName());
                     userRepository.save(mapper.map(user, UserEntity.class));
                 }
@@ -97,6 +110,7 @@ public class UserServiceImpl implements UserServiceInterface {
             throw new ExternalApiException("Unexpected error while calling Hubstaff API", 500, e);
         }
     }
+
 
     public List<UserDTO> getUsers(String organizationName) {
         return userRepository.findUserByOrganization(organizationName).stream().map(userEntity -> mapper.map(userEntity, UserDTO.class)).toList();

@@ -4,6 +4,7 @@ import com.hubstaff.integration.dto.*;
 import com.hubstaff.integration.entity.IntegrationEntity;
 import com.hubstaff.integration.exception.ExternalApiException;
 import com.hubstaff.integration.repository.TokenRepository;
+import com.hubstaff.integration.util.ObjectUtil;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,7 +133,11 @@ public class TokenServiceImpl implements TokenServiceInterface{
     }
 
     public void refreshToken() {
-        IntegrationDTO integrationDTO=getToken();
+        IntegrationDTO integrationDTO = getToken();
+        if (!ObjectUtil.validateDto(integrationDTO)) {
+                return;
+        }
+
         Instant createdAt=integrationDTO.getCreatedAt().toInstant();
         int expiresAfter=Integer.parseInt(integrationDTO.getExpiresIn());
 
@@ -150,6 +155,9 @@ public class TokenServiceImpl implements TokenServiceInterface{
 
     public void refreshAccessToken() {
         IntegrationDTO integrationDTO=getToken();
+        if (!ObjectUtil.validateDto(integrationDTO)) {
+            return;
+        }
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", accessTokenRefreshGrantType);
         formData.add("refresh_token", integrationDTO.getRefreshToken());
