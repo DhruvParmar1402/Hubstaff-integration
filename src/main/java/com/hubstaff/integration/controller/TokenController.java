@@ -29,7 +29,7 @@ public class TokenController {
         ResponseHandler<String> response;
         try {
             tokenServiceImpl.getCode();
-            response=new ResponseHandler<>(null,"oauth.initiated",HttpStatus.OK,true);
+            response=new ResponseHandler<>(null,messageSource.getMessage("oauth.initiated"),HttpStatus.OK,true);
             return ResponseEntity.ok(response);
         }
         catch (Exception e)

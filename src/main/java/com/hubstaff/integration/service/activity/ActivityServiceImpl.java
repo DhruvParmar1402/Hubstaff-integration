@@ -4,11 +4,15 @@ import com.hubstaff.integration.dto.*;
 
 import java.time.LocalDate;
 
-import com.hubstaff.integration.entity.ActivityEntity;
+import com.hubstaff.integration.entity.Activity;
+import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.exception.ExternalApiException;
 import com.hubstaff.integration.repository.ActivityRepository;
+import com.hubstaff.integration.service.application.ApplicationService;
 import com.hubstaff.integration.service.application.ApplicationServiceImpl;
+import com.hubstaff.integration.service.organization.OrganizationService;
 import com.hubstaff.integration.service.organization.OrganizationServiceImpl;
+import com.hubstaff.integration.service.token.TokenService;
 import com.hubstaff.integration.service.token.TokenServiceImpl;
 import com.hubstaff.integration.util.ObjectUtil;
 import org.modelmapper.ModelMapper;
@@ -29,7 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
-public class ActivityServiceImpl implements ActivityServiceInterface {
+public class ActivityServiceImpl implements ActivityService {
     @Value("${base.api.url}")
     private String baseUrl;
 
@@ -40,9 +44,9 @@ public class ActivityServiceImpl implements ActivityServiceInterface {
     private String fetchActivityDaily;
 
     private final ModelMapper mapper;
-    private final TokenServiceImpl tokenServiceImpl;
-    private final OrganizationServiceImpl organizationServiceImpl;
-    private final ApplicationServiceImpl applicationServiceImpl;
+    private final TokenService tokenServiceImpl;
+    private final OrganizationService organizationServiceImpl;
+    private final ApplicationService applicationServiceImpl;
     private final RestTemplate restTemplate;
     private final ActivityRepository activityRepository;
 
@@ -55,14 +59,13 @@ public class ActivityServiceImpl implements ActivityServiceInterface {
         this.activityRepository = activityRepository;
     }
 
-    public void fetchAndSaveActivities() {
+    public void fetchAndSaveActivities() throws EntityNotFound {
 
         List<OrganizationDTO> organizations = organizationServiceImpl.getOrganizations();
 
         LocalDate yesterday = LocalDate.now(ZoneOffset.UTC).minusDays(1);
 
         ZonedDateTime dayStart = yesterday.atStartOfDay(ZoneOffset.UTC);
-
         ZonedDateTime dayEnd = yesterday.atTime(23, 59, 59).atZone(ZoneOffset.UTC);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -79,31 +82,38 @@ public class ActivityServiceImpl implements ActivityServiceInterface {
 
         try {
             for (OrganizationDTO organization : organizations) {
-                String finalUrl = baseUrl + fetchOrganizationUrl + "/"
-                        + organization.getOrganizationId().toString() + "/"
-                        + fetchActivityDaily + "?date[start]=" + startFormatted + "date[stop]=" + endFormatted;
+                PaginationResponse page=null;
+                do {
+                    String finalUrl = baseUrl + fetchOrganizationUrl + "/"
+                            + organization.getOrganizationId().toString() + "/"
+                            + fetchActivityDaily + "?date[start]=" + startFormatted + "date[stop]=" + endFormatted;
 
-                ResponseEntity<ActivityResponse> response = restTemplate.exchange(
-                        finalUrl,
-                        HttpMethod.GET,
-                        requestEntity,
-                        ActivityResponse.class
-                );
+                    if(page!=null)
+                    {
+                        finalUrl+="&page_start_id="+page.getNextPageStartId().toString();
+                    }
 
-                List<ActivityDTO> activities = null;
-                if (ObjectUtil.isNullOrEmpty(response.getBody()) || ObjectUtil.isNullOrEmpty(response.getBody().getActivities())) {
-                    continue;
-                }
+                    ResponseEntity<ActivityResponse> response = restTemplate.exchange(
+                            finalUrl,
+                            HttpMethod.GET,
+                            requestEntity,
+                            ActivityResponse.class
+                    );
 
-                activities = response.getBody().getActivities();
+                    List<ActivityDTO> activities = null;
+                    if (ObjectUtil.isNullOrEmpty(response.getBody()) || ObjectUtil.isNullOrEmpty(response.getBody().getActivities())) {
+                        continue;
+                    }
 
-                System.out.println(activities);
+                    activities = response.getBody().getActivities();
+                    page=response.getBody().getPage()==null?null:response.getBody().getPage();
 
-                for (ActivityDTO activity : activities) {
-                    activity.setOrganizationId(organization.getOrganizationId());
-                    activityRepository.save(mapper.map(activity, ActivityEntity.class));
-                    applicationServiceImpl.save(mapper.map(activity, ApplicationDTO.class));
-                }
+                    for (ActivityDTO activity : activities) {
+                        activity.setOrganizationId(organization.getOrganizationId());
+                        activityRepository.save(mapper.map(activity, Activity.class));
+                        applicationServiceImpl.save(mapper.map(activity, ApplicationDTO.class));
+                    }
+                }while (page!=null);
             }
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             throw new ExternalApiException("Hubstaff API error: " + e.getStatusText(), e.getStatusCode().value(), e);
@@ -116,7 +126,13 @@ public class ActivityServiceImpl implements ActivityServiceInterface {
         Long projectId=activityDTO.getProjectId();
         String appName=activityDTO.getAppName();
 
-        List<ActivityEntity> timeSpent= activityRepository.getTotalTimeSpentOnAppByProject(projectId,appName);
+        List<Activity> timeSpent= activityRepository.getTotalTimeSpentOnAppByProject(projectId,appName);
+
+        if(ObjectUtil.isNullOrEmpty(timeSpent))
+        {
+            return null;
+        }
+
         int totalTracked = timeSpent.stream()
                 .reduce(0, (sum, activity) -> sum + activity.getTracked(), Integer::sum);
 
@@ -126,17 +142,27 @@ public class ActivityServiceImpl implements ActivityServiceInterface {
     public ApplicationActivityDTO getTotalTimeSpentOnAppByOrganization(ActivityDTO activityDTO) {
         Integer organizationId=activityDTO.getOrganizationId();
         String appName=activityDTO.getAppName();
-        List<ActivityEntity> timeSpent= activityRepository.getTotalTimeSpentOnAppByOrganization(organizationId,appName);
+        List<Activity> timeSpent= activityRepository.getTotalTimeSpentOnAppByOrganization(organizationId,appName);
+
+        if(ObjectUtil.isNullOrEmpty(timeSpent))
+        {
+            return null;
+        }
 
         int totalTracked = timeSpent.stream()
                 .reduce(0, (sum, activity) -> sum + activity.getTracked(), Integer::sum);
 
         return new ApplicationActivityDTO("Total time spend by organization with id: "+organizationId+" on app "+appName+" is: "+totalTracked,totalTracked);
     }
+
     public ApplicationActivityDTO getTotalTimeSpentOnApp(ActivityDTO activityDTO) {
         Long userId=activityDTO.getUserId();
         String appName=activityDTO.getAppName();
-        List<ActivityEntity> timeSpent= activityRepository.getTotalTimeSpentOnApp(userId,appName);
+        List<Activity> timeSpent= activityRepository.getTotalTimeSpentOnApp(userId,appName);
+        if(ObjectUtil.isNullOrEmpty(timeSpent))
+        {
+            return null;
+        }
         int totalTracked = timeSpent.stream()
                 .reduce(0, (sum, activity) -> sum + activity.getTracked(), Integer::sum);
         return new ApplicationActivityDTO("Total time spend by user "+userId+" on app "+appName+" is: "+totalTracked,totalTracked);

@@ -12,7 +12,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @DynamoDBTable(tableName = "Integrations")
-public class IntegrationEntity {
+public class Integration {
     @DynamoDBHashKey
     @DynamoDBAttribute(attributeName = "clientId")
     private String clientId;

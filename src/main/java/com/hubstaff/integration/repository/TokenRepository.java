@@ -1,7 +1,7 @@
 package com.hubstaff.integration.repository;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.hubstaff.integration.entity.IntegrationEntity;
+import com.hubstaff.integration.entity.Integration;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -14,15 +14,16 @@ public class TokenRepository {
         this.repo=repo;
     }
 
-    public void save(IntegrationEntity entity) {
+    public void save(Integration entity) {
         repo.save(entity);
     }
 
     public String getAccessToken(String clientId) {
-        return repo.load(IntegrationEntity.class,clientId).getAccessToken();
+        Integration token=repo.load(Integration.class,clientId);
+        return token==null?null:token.getAccessToken();
     }
 
-    public IntegrationEntity getRefreshToken(String clientId) {
-        return repo.load(IntegrationEntity.class,clientId);
+    public Integration getRefreshToken(String clientId) {
+        return repo.load(Integration.class,clientId);
     }
 }

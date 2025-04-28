@@ -11,6 +11,5 @@ import java.util.List;
 public class OrganizationResponse {
     @JsonProperty("organizations")
     private List<OrganizationDTO> organizations;
-
 }
 

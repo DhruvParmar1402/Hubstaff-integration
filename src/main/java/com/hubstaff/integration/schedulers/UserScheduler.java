@@ -1,6 +1,7 @@
 package com.hubstaff.integration.schedulers;
 
 
+import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.service.user.UserServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +20,7 @@ public class UserScheduler {
     }
 
     @Scheduled(cron = "0 0 0 * * *")
-    public void fetchAndSaveUsers()
-
-    {
+    public void fetchAndSaveUsers() throws EntityNotFound {
         logger.info("User scheduler executed.");
         userServiceImpl.fetchAndSaveUsers();
     }

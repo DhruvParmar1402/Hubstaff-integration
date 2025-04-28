@@ -1,5 +1,6 @@
 package com.hubstaff.integration.schedulers;
 
+import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.service.organization.OrganizationServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,8 +19,7 @@ public class OrganizationScheduler {
     }
 
     @Scheduled(cron = "0 0 0 * * *")
-    public void fetchAndSaveOrganizations()
-    {
+    public void fetchAndSaveOrganizations() throws EntityNotFound {
         logger.info("Organization scheduler executed.");
         organizationServiceImpl.fetchAndSave();
     }

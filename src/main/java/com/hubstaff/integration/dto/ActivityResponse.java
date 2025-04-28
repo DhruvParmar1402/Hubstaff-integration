@@ -12,4 +12,7 @@ import java.util.List;
 public class ActivityResponse {
     @JsonProperty("daily_applications")
     private List<ActivityDTO> activities;
+
+    @JsonProperty("pagination")
+    private PaginationResponse page;
 }

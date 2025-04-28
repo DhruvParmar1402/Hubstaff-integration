@@ -13,4 +13,7 @@ public class UserResponse {
     @JsonProperty("users")
     List<UserDTO> users;
 
+    @JsonProperty("pagination")
+    private PaginationResponse page;
+
 }

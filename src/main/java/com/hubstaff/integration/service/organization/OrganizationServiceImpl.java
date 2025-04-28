@@ -2,9 +2,11 @@ package com.hubstaff.integration.service.organization;
 
 import com.hubstaff.integration.dto.OrganizationDTO;
 import com.hubstaff.integration.dto.OrganizationResponse;
-import com.hubstaff.integration.entity.OrganizationEntity;
+import com.hubstaff.integration.entity.Organization;
+import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.exception.ExternalApiException;
 import com.hubstaff.integration.repository.OrganizationRepository;
+import com.hubstaff.integration.service.token.TokenService;
 import com.hubstaff.integration.service.token.TokenServiceImpl;
 import com.hubstaff.integration.util.CollectionsUtil;
 import com.hubstaff.integration.util.ObjectUtil;
@@ -25,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class OrganizationServiceImpl implements OrganizationServiceInterface {
+public class OrganizationServiceImpl implements OrganizationService {
 
     @Value("${base.api.url}")
     private String baseUrl;
@@ -33,7 +35,7 @@ public class OrganizationServiceImpl implements OrganizationServiceInterface {
     @Value("${fetch.organization.url}")
     private String fetchOrganizationUrl;
 
-    private TokenServiceImpl tokenServiceImpl;
+    private TokenService tokenServiceImpl;
     private ModelMapper mapper;
     private RestTemplate restTemplate;
     private OrganizationRepository organizationRepository;
@@ -47,7 +49,7 @@ public class OrganizationServiceImpl implements OrganizationServiceInterface {
         this.organizationRepository=organizationRepository;
     }
 
-    public void fetchAndSave() {
+    public void fetchAndSave() throws EntityNotFound {
         String token = tokenServiceImpl.getAccessToken();
         if (ObjectUtil.isNullOrEmpty(token)) {
             throw new ExternalApiException("Access token is null or empty", 401, null);
@@ -75,7 +77,6 @@ public class OrganizationServiceImpl implements OrganizationServiceInterface {
             throw new ExternalApiException("Unexpected error while calling Hubstaff API", 500, e);
         }
 
-
         OrganizationResponse body = response.getBody();
         List<OrganizationDTO> organizations =
                 body == null || ObjectUtil.isNullOrEmpty(body.getOrganizations())
@@ -85,16 +86,16 @@ public class OrganizationServiceImpl implements OrganizationServiceInterface {
         organizations= util.filterFromPreviousDay(organizations, OrganizationDTO::getCreatedAt);
 
         for (OrganizationDTO organization : organizations) {
-            organizationRepository.save(mapper.map(organization,OrganizationEntity.class));
+            organizationRepository.save(mapper.map(organization, Organization.class));
         }
     }
 
     public List<OrganizationDTO> getOrganizations() {
-        List<OrganizationEntity> organizations=organizationRepository.getOrganizations();
+        List<Organization> organizations=organizationRepository.getOrganizations();
         if(ObjectUtil.isNullOrEmpty(organizations))
         {
             return new ArrayList<>();
         }
-        return organizations.stream().map(organizationEntity -> mapper.map(organizationEntity,OrganizationDTO.class)).toList();
+        return organizations.stream().map(organization -> mapper.map(organization,OrganizationDTO.class)).toList();
     }
 }

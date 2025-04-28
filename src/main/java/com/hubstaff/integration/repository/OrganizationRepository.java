@@ -2,7 +2,7 @@ package com.hubstaff.integration.repository;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
-import com.hubstaff.integration.entity.OrganizationEntity;
+import com.hubstaff.integration.entity.Organization;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,11 +17,11 @@ public class OrganizationRepository {
         this.repo=repo;
     }
 
-    public void save(OrganizationEntity organization) {
+    public void save(Organization organization) {
         repo.save(organization);
     }
 
-    public List<OrganizationEntity> getOrganizations() {
-        return repo.scan(OrganizationEntity.class,new DynamoDBScanExpression());
+    public List<Organization> getOrganizations() {
+        return repo.scan(Organization.class,new DynamoDBScanExpression());
     }
 }

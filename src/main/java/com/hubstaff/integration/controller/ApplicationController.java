@@ -5,7 +5,6 @@ import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.service.application.ApplicationServiceImpl;
 import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ResponseHandler;
-import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +28,7 @@ public class ApplicationController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<?> getApplication (@PathVariable @NotNull Integer userId)
+    public ResponseEntity<?> getApplication (@PathVariable Integer userId)
     {
         ResponseHandler<List<ApplicationDTO>> response;
         try {
@@ -40,8 +39,8 @@ public class ApplicationController {
         catch (EntityNotFound e)
         {
             log.error(e.getMessage());
-            response=new ResponseHandler<>(null,e.getMessage(),HttpStatus.BAD_REQUEST,true);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            response=new ResponseHandler<>(null,e.getMessage(),HttpStatus.NOT_FOUND,true);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
         catch (Exception e)
         {

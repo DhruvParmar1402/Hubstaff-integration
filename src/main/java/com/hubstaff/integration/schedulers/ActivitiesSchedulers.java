@@ -1,5 +1,6 @@
 package com.hubstaff.integration.schedulers;
 
+import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.service.activity.ActivityServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +19,10 @@ public class ActivitiesSchedulers {
     }
 
     @Scheduled(cron = "0 0 0 * * *")
-    public void fetchAndSaveActivities()
-    {
+    public void fetchAndSaveActivities() throws EntityNotFound {
         logger.info("Application activity schedulers executed.");
         activityServiceImpl.fetchAndSaveActivities();
     }
 }
+
+

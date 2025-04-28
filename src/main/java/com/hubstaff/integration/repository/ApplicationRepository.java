@@ -3,7 +3,7 @@ package com.hubstaff.integration.repository;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.hubstaff.integration.entity.ApplicationEntity;
+import com.hubstaff.integration.entity.Application;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
@@ -19,20 +19,19 @@ public class ApplicationRepository {
         this.repo=repo;
     }
 
-    public void save(ApplicationEntity application) {
+    public void save(Application application) {
         repo.save(application);
     }
 
-    public List<ApplicationEntity> fetchByUserId(Integer userId) {
+    public List<Application> fetchByUserId(Integer userId) {
         Map<String , AttributeValue> eav=new HashMap<>();
         eav.put(":userId",new AttributeValue().withN(Integer.toString(userId)));
 
-        DynamoDBQueryExpression<ApplicationEntity> expression=new DynamoDBQueryExpression<ApplicationEntity>()
+        DynamoDBQueryExpression<Application> expression=new DynamoDBQueryExpression<Application>()
                 .withKeyConditionExpression("userId = :userId")
                 .withExpressionAttributeValues(eav)
-                .withConsistentRead(false)
-                .withScanIndexForward(false);
+                .withConsistentRead(false);
 
-        return repo.query(ApplicationEntity.class,expression);
+        return repo.query(Application.class,expression);
     }
 }

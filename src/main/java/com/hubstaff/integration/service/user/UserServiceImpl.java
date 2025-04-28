@@ -1,12 +1,16 @@
 package com.hubstaff.integration.service.user;
 
 import com.hubstaff.integration.dto.OrganizationDTO;
+import com.hubstaff.integration.dto.PaginationResponse;
 import com.hubstaff.integration.dto.UserDTO;
 import com.hubstaff.integration.dto.UserResponse;
-import com.hubstaff.integration.entity.UserEntity;
+import com.hubstaff.integration.entity.User;
+import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.exception.ExternalApiException;
 import com.hubstaff.integration.repository.UserRepository;
+import com.hubstaff.integration.service.organization.OrganizationService;
 import com.hubstaff.integration.service.organization.OrganizationServiceImpl;
+import com.hubstaff.integration.service.token.TokenService;
 import com.hubstaff.integration.service.token.TokenServiceImpl;
 import com.hubstaff.integration.util.CollectionsUtil;
 import com.hubstaff.integration.util.ObjectUtil;
@@ -25,11 +29,11 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 
 @Service
-public class UserServiceImpl implements UserServiceInterface {
+public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final OrganizationServiceImpl organizationServiceImpl;
-    private final TokenServiceImpl tokenServiceImpl;
+    private final OrganizationService organizationServiceImpl;
+    private final TokenService tokenServiceImpl;
     private final RestTemplate restTemplate;
     private final ModelMapper mapper;
     private final CollectionsUtil<UserDTO> util = new CollectionsUtil<>();
@@ -51,11 +55,11 @@ public class UserServiceImpl implements UserServiceInterface {
     @Value("${fetch.users.url}")
     private String fetchUserUrl;
 
-    public void fetchAndSaveUsers() {
+    public void fetchAndSaveUsers() throws EntityNotFound {
         List<OrganizationDTO> organizations = organizationServiceImpl.getOrganizations();
         String token = tokenServiceImpl.getAccessToken();
 
-        if (ObjectUtil.isNullOrEmpty(token) || ObjectUtil.isNullOrEmpty(organizations)) {
+        if (ObjectUtil.isNullOrEmpty(organizations)) {
             return;
         }
 
@@ -64,8 +68,14 @@ public class UserServiceImpl implements UserServiceInterface {
         HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
 
         try {
+            PaginationResponse page=null;
             for (OrganizationDTO organization : organizations) {
                 String finalUrl = baseUrl + fetchOrganizationUrl + "/" + organization.getOrganizationId() + fetchUserUrl;
+
+                if(page!=null)
+                {
+                    finalUrl+="&page_start_id="+page.getNextPageStartId().toString();
+                }
 
                 ResponseEntity<UserResponse> response = restTemplate.exchange(
                         finalUrl,
@@ -80,6 +90,8 @@ public class UserServiceImpl implements UserServiceInterface {
 
                 List<UserDTO> users = response.getBody().getUsers();
 
+                page=response.getBody().getPage();
+
                 users = util.filterFromPreviousDay(users, UserDTO::getCreatedAt);
 
                 for (UserDTO user : users) {
@@ -89,7 +101,7 @@ public class UserServiceImpl implements UserServiceInterface {
 
                     user.setOrganizationId(organization.getOrganizationId());
                     user.setOrganizationName(organization.getOrganizationName());
-                    userRepository.save(mapper.map(user, UserEntity.class));
+                    userRepository.save(mapper.map(user, User.class));
                 }
             }
         } catch (HttpClientErrorException | HttpServerErrorException e) {
@@ -101,8 +113,12 @@ public class UserServiceImpl implements UserServiceInterface {
         }
     }
 
-
     public List<UserDTO> getUsers(String organizationName) {
-        return userRepository.findUserByOrganization(organizationName).stream().map(userEntity -> mapper.map(userEntity, UserDTO.class)).toList();
+        List<User>users=userRepository.findUserByOrganization(organizationName);
+        if(ObjectUtil.isNullOrEmpty(users))
+        {
+            return null;
+        }
+        return users.stream().map(user -> mapper.map(user, UserDTO.class)).toList();
     }
 }

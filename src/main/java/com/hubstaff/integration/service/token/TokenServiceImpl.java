@@ -1,7 +1,8 @@
 package com.hubstaff.integration.service.token;
 
 import com.hubstaff.integration.dto.*;
-import com.hubstaff.integration.entity.IntegrationEntity;
+import com.hubstaff.integration.entity.Integration;
+import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.exception.ExternalApiException;
 import com.hubstaff.integration.repository.TokenRepository;
 import com.hubstaff.integration.util.ObjectUtil;
@@ -20,9 +21,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 
 @Service
-public class TokenServiceImpl implements TokenServiceInterface{
+public class TokenServiceImpl implements TokenService {
 
     @Value("${authorization.code.url}")
     private String getCodeUrl;
@@ -68,7 +70,7 @@ public class TokenServiceImpl implements TokenServiceInterface{
 
         String finalUrl = authorizationCodeUrl + "?client_id=" + clientId
                 + "&response_type=" +codeObtainGrantType
-                + "&nonce=d7f9a2b0e4c647dfb5"
+                + "&nonce="+ UUID.randomUUID().toString()
                 + "&redirect_uri=" + redirectUrl
                 + "&scope=" + scope;
         try {
@@ -111,7 +113,7 @@ public class TokenServiceImpl implements TokenServiceInterface{
             throw new ExternalApiException("Failed to connect to Hubstaff API", 503, e);
         }
 
-        IntegrationEntity entity=mapper.map(response.getBody(), IntegrationEntity.class);
+        Integration entity=mapper.map(response.getBody(), Integration.class);
         entity.setClientId(clientId);
         entity.setClientSecret(clientSecret);
         entity.setRedirectUri(redirectUrl);
@@ -122,13 +124,18 @@ public class TokenServiceImpl implements TokenServiceInterface{
         return mapper.map(entity, IntegrationDTO.class);
     }
 
-    public String getAccessToken() {
-        return tokenRepository.getAccessToken(clientId);
+    public String getAccessToken() throws EntityNotFound {
+        String token=tokenRepository.getAccessToken(clientId);
+        if(!ObjectUtil.validateDto(token))
+        {
+            throw new EntityNotFound("token.not.exists");
+        }
+        return token;
     }
 
     public IntegrationDTO getToken()
     {
-        IntegrationEntity integration=tokenRepository.getRefreshToken(clientId);
+        Integration integration=tokenRepository.getRefreshToken(clientId);
         return integration==null?null:mapper.map(integration,IntegrationDTO.class);
     }
 
@@ -149,12 +156,11 @@ public class TokenServiceImpl implements TokenServiceInterface{
 
         if(isAccessExpired || isRefreshExpired)
         {
-            refreshAccessToken();
+            refreshAccessToken(integrationDTO);
         }
     }
 
-    public void refreshAccessToken() {
-        IntegrationDTO integrationDTO=getToken();
+    public void refreshAccessToken(IntegrationDTO integrationDTO) {
         if (!ObjectUtil.validateDto(integrationDTO)) {
             return;
         }
@@ -182,7 +188,7 @@ public class TokenServiceImpl implements TokenServiceInterface{
             throw new ExternalApiException("Unexpected error while calling Hubstaff API", 500, e);
         }
 
-        IntegrationEntity entity=mapper.map(response.getBody(), IntegrationEntity.class);
+        Integration entity=mapper.map(response.getBody(), Integration.class);
         entity.setClientId(clientId);
         entity.setClientSecret(clientSecret);
         entity.setRedirectUri(redirectUrl);
