@@ -5,7 +5,7 @@ import com.hubstaff.integration.exception.EntityNotFound;
 
 import java.util.List;
 
-public interface ApplicationServiceInterface {
+public interface ApplicationService {
     void save(ApplicationDTO applicationDTO);
     List<ApplicationDTO> fetchByUserId(Integer userId) throws EntityNotFound;
 }

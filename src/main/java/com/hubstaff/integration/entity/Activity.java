@@ -12,7 +12,7 @@ import lombok.ToString;
 @ToString
 
 @DynamoDBTable(tableName = "Activities")
-public class ActivityEntity {
+public class Activity {
     @DynamoDBHashKey(attributeName = "userId")
     private Long userId;
 

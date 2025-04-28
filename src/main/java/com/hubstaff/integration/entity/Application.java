@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @DynamoDBTable(tableName = "Applications")
-public class ApplicationEntity {
+public class Application {
     @DynamoDBHashKey(attributeName = "userId")
     private Integer userId;
 

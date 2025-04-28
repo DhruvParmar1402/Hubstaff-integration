@@ -5,20 +5,34 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@DynamoDBTable(tableName = "Organizations")
-public class OrganizationEntity {
-    @DynamoDBHashKey(attributeName = "organizationName")
+@DynamoDBTable(tableName = "Users")
+public class User {
+
+    @DynamoDBHashKey(attributeName = "email")
+    @DynamoDBAttribute(attributeName = "email")
+    private String email;
+
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "organizationId_index",attributeName = "organizationId")
+    @DynamoDBAttribute(attributeName = "organizationId")
+    private Integer organizationId;
+
+    @DynamoDBAttribute(attributeName = "userId")
+    private Integer userId;
+
     @DynamoDBAttribute(attributeName = "organizationName")
     private String organizationName;
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "organizationId_index", attributeName = "organizationId")
-    @DynamoDBAttribute(attributeName = "organizationId")
-    private Integer organizationId;
+    @DynamoDBAttribute(attributeName = "firstName")
+    private String firstName;
+
+    @DynamoDBAttribute(attributeName = "lastName")
+    private String lastName;
+
+    @DynamoDBAttribute(attributeName = "timeZone")
+    private String timeZone;
 
     @DynamoDBIndexRangeKey(globalSecondaryIndexName = "createdAt_status_index",attributeName = "status")
     @DynamoDBAttribute(attributeName = "status")
@@ -30,10 +44,4 @@ public class OrganizationEntity {
 
     @DynamoDBAttribute(attributeName = "updatedAt")
     private String updatedAt;
-
-    @DynamoDBAttribute(attributeName = "metadata")
-    private Map<String, Object> metadata;
-
-    @DynamoDBAttribute(attributeName = "inviteUrl")
-    private String inviteUrl;
 }
