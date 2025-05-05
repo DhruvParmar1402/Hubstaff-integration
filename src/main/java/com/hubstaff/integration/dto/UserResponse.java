@@ -13,7 +13,7 @@ public class UserResponse {
     @JsonProperty("users")
     List<UserDTO> users;
 
-    @JsonProperty("pagination")
-    private PaginationResponse page;
+    @JsonProperty("pagination.next_page_start_id")
+    private Long page;
 
 }

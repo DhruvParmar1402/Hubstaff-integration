@@ -1,7 +1,6 @@
 package com.hubstaff.integration.service.user;
 
 import com.hubstaff.integration.dto.OrganizationDTO;
-import com.hubstaff.integration.dto.PaginationResponse;
 import com.hubstaff.integration.dto.UserDTO;
 import com.hubstaff.integration.dto.UserResponse;
 import com.hubstaff.integration.entity.User;
@@ -75,13 +74,13 @@ public class UserServiceImpl implements UserService {
         tokenService.refreshToken();
 
         try {
-            PaginationResponse page=null;
+            Long page=null;
             for (OrganizationDTO organization : organizations) {
                 String finalUrl = baseUrl + fetchOrganizationUrl + "/" + organization.getOrganizationId() + fetchUserUrl;
 
                 if(page!=null)
                 {
-                    finalUrl+="&page_start_id="+page.getNextPageStartId().toString();
+                    finalUrl+="&page_start_id="+page.toString();
                 }
 
                 ResponseEntity<UserResponse> response = restTemplate.exchange(

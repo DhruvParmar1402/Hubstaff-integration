@@ -75,15 +75,15 @@ public class ActivityServiceImpl implements ActivityService {
 
         try {
             for (OrganizationDTO organization : organizations) {
-                PaginationResponse page=null;
+                Long page=null;
                 do {
                     String finalUrl = baseUrl + fetchOrganizationUrl + "/"
                             + organization.getOrganizationId().toString() + "/"
-                            + fetchActivityDaily + "?date[start]=" + startFormatted + "date[stop]=" + endFormatted;
+                            + fetchActivityDaily + "?date[start]=" + startFormatted + "date[stop]=" + endFormatted +"&page_limit=20";
 
                     if(page!=null)
                     {
-                        finalUrl+="&page_start_id="+page.getNextPageStartId().toString();
+                        finalUrl+="&page_start_id="+page.toString();
                     }
 
                     ResponseEntity<ActivityResponse> response = restTemplate.exchange(
