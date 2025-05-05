@@ -13,6 +13,8 @@ import com.hubstaff.integration.service.organization.OrganizationServiceImpl;
 import com.hubstaff.integration.service.token.TokenService;
 import com.hubstaff.integration.service.token.TokenServiceImpl;
 import com.hubstaff.integration.util.CollectionsUtil;
+import com.hubstaff.integration.util.DateUtil;
+import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ObjectUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,24 +28,27 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final OrganizationService organizationServiceImpl;
-    private final TokenService tokenServiceImpl;
+    private final OrganizationService organizationService;
+    private final TokenService tokenService;
     private final RestTemplate restTemplate;
     private final ModelMapper mapper;
+    private final MessageSourceImpl messageSource;
     private final CollectionsUtil<UserDTO> util = new CollectionsUtil<>();
 
-    public UserServiceImpl(UserRepository userRepository, OrganizationServiceImpl organizationServiceImpl, TokenServiceImpl tokenServiceImpl, RestTemplate restTemplate, ModelMapper mapper) {
+    public UserServiceImpl(UserRepository userRepository, OrganizationServiceImpl organizationService, TokenServiceImpl tokenService, RestTemplate restTemplate, ModelMapper mapper,MessageSourceImpl messageSource) {
         this.userRepository = userRepository;
-        this.organizationServiceImpl = organizationServiceImpl;
-        this.tokenServiceImpl = tokenServiceImpl;
+        this.organizationService = organizationService;
+        this.tokenService = tokenService;
         this.restTemplate = restTemplate;
         this.mapper = mapper;
+        this.messageSource=messageSource;
     }
 
     @Value("${base.api.url}")
@@ -55,9 +60,10 @@ public class UserServiceImpl implements UserService {
     @Value("${fetch.users.url}")
     private String fetchUserUrl;
 
+    @Override
     public void fetchAndSaveUsers() throws EntityNotFound {
-        List<OrganizationDTO> organizations = organizationServiceImpl.getOrganizations();
-        String token = tokenServiceImpl.getAccessToken();
+        List<OrganizationDTO> organizations = organizationService.getOrganizations();
+        String token = tokenService.getAccessToken();
 
         if (ObjectUtil.isNullOrEmpty(organizations)) {
             return;
@@ -66,6 +72,7 @@ public class UserServiceImpl implements UserService {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
+        tokenService.refreshToken();
 
         try {
             PaginationResponse page=null;
@@ -98,27 +105,36 @@ public class UserServiceImpl implements UserService {
                     if (!ObjectUtil.validateDto(user)) {
                         continue;
                     }
-
                     user.setOrganizationId(organization.getOrganizationId());
                     user.setOrganizationName(organization.getOrganizationName());
                     userRepository.save(mapper.map(user, User.class));
                 }
             }
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new ExternalApiException("Hubstaff API error: " + e.getStatusText(), e.getStatusCode().value(), e);
+            throw new ExternalApiException(messageSource.getMessage("Hubstaff.api.error") + e.getStatusText(), e.getStatusCode().value(), e);
         } catch (ResourceAccessException e) {
-            throw new ExternalApiException("Failed to connect to Hubstaff API", 503, e);
+            throw new ExternalApiException("failed.to.connectHubstaff", 503, e);
         } catch (Exception e) {
-            throw new ExternalApiException("Unexpected error while calling Hubstaff API", 500, e);
+            throw new ExternalApiException("Hubstaff.unexpected.error", 500, e);
         }
     }
 
-    public List<UserDTO> getUsers(String organizationName) {
-        List<User>users=userRepository.findUserByOrganization(organizationName);
+    @Override
+    public List<UserDTO> getUsers(Integer organizationId) {
+        List<User>users=userRepository.findUserByOrganization(organizationId);
         if(ObjectUtil.isNullOrEmpty(users))
         {
-            return null;
+            return new ArrayList<>();
         }
         return users.stream().map(user -> mapper.map(user, UserDTO.class)).toList();
+    }
+
+    @Override
+    public List<UserDTO> getNewUsers(Long organizationId) {
+        String startOfMonth= DateUtil.startOfCurrentMonth().toString();
+        String endOfMonth=DateUtil.endOfCurrentMonth().toString();
+
+        List<User> users=userRepository.findUserByOrganizationId(organizationId,startOfMonth,endOfMonth);
+        return users.stream().map(entity->mapper.map(entity,UserDTO.class)).toList();
     }
 }

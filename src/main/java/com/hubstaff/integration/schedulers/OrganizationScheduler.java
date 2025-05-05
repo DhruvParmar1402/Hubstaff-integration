@@ -18,7 +18,8 @@ public class OrganizationScheduler {
         this.organizationServiceImpl = organizationServiceImpl;
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
+//    @Scheduled(cron = "0 0 0 * * *")
+//    @Scheduled(fixedRate = 5000)
     public void fetchAndSaveOrganizations() throws EntityNotFound {
         logger.info("Organization scheduler executed.");
         organizationServiceImpl.fetchAndSave();

@@ -23,15 +23,54 @@ public class ApplicationRepository {
         repo.save(application);
     }
 
-    public List<Application> fetchByUserId(Integer userId) {
-        Map<String , AttributeValue> eav=new HashMap<>();
+    public List<Application> fetchByUserIdAndAppName(Integer userId,String appName) {
+        Map<String,AttributeValue> eav=new HashMap<>();
         eav.put(":userId",new AttributeValue().withN(Integer.toString(userId)));
+        String condition="userId = :userId";
+
+        if(appName!=null)
+        {
+            eav.put(":appName",new AttributeValue().withS(appName));
+            condition+=" AND appName = :appName";
+        }
 
         DynamoDBQueryExpression<Application> expression=new DynamoDBQueryExpression<Application>()
-                .withKeyConditionExpression("userId = :userId")
+                .withKeyConditionExpression(condition)
                 .withExpressionAttributeValues(eav)
                 .withConsistentRead(false);
 
         return repo.query(Application.class,expression);
+    }
+
+    public List<Application> fetchNewApplications(Integer organizationId, String startDate, String endDate) {
+        Map<String , AttributeValue> eav=new HashMap<>();
+
+        eav.put(":organizationId", new AttributeValue().withN(Integer.toString(organizationId)));
+        eav.put(":startDate", new AttributeValue().withS(startDate));
+        eav.put(":endDate", new AttributeValue().withS(endDate));
+
+        DynamoDBQueryExpression<Application> expression=new DynamoDBQueryExpression<Application>()
+                .withIndexName("organizationId_addedAt_index")
+                .withKeyConditionExpression("organizationId = :organizationId AND addedAt BETWEEN :startDate AND :endDate")
+                .withExpressionAttributeValues(eav)
+                .withConsistentRead(false);
+
+        return repo.query(Application.class, expression);
+    }
+
+    public List<Application> getAppsUsedBetweenStartAndEnd(Integer organizationId, String startDate, String endDate) {
+        Map<String , AttributeValue> eav=new HashMap<>();
+
+        eav.put(":organizationId", new AttributeValue().withN(Integer.toString(organizationId)));
+        eav.put(":startDate", new AttributeValue().withS(startDate));
+        eav.put(":endDate", new AttributeValue().withS(endDate));
+
+        DynamoDBQueryExpression<Application> expression=new DynamoDBQueryExpression<Application>()
+                .withIndexName("organizationId_lastUsedAt_index")
+                .withKeyConditionExpression("organizationId = :organizationId AND lastUsedAt BETWEEN :startDate AND :endDate")
+                .withExpressionAttributeValues(eav)
+                .withConsistentRead(false);
+
+        return repo.query(Application.class, expression);
     }
 }

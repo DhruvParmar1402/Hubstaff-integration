@@ -19,7 +19,8 @@ public class UserScheduler {
         this.userServiceImpl = userServiceImpl;
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
+//    @Scheduled(cron = "0 0 0 * * *")
+//    @Scheduled(fixedRate = 5000)
     public void fetchAndSaveUsers() throws EntityNotFound {
         logger.info("User scheduler executed.");
         userServiceImpl.fetchAndSaveUsers();

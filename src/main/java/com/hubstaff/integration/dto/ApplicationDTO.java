@@ -11,4 +11,8 @@ public class ApplicationDTO {
     private Integer organizationId;
 
     private String appName;
+
+    private String addedAt;
+
+    private String lastUsedAt;
 }

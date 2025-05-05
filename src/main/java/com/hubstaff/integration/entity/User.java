@@ -11,37 +11,26 @@ import lombok.NoArgsConstructor;
 @DynamoDBTable(tableName = "Users")
 public class User {
 
-    @DynamoDBHashKey(attributeName = "email")
-    @DynamoDBAttribute(attributeName = "email")
+    @DynamoDBHashKey
     private String email;
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "organizationId_index",attributeName = "organizationId")
-    @DynamoDBAttribute(attributeName = "organizationId")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "organizationId_createdAt_index")
     private Integer organizationId;
 
-    @DynamoDBAttribute(attributeName = "userId")
     private Integer userId;
 
-    @DynamoDBAttribute(attributeName = "organizationName")
     private String organizationName;
 
-    @DynamoDBAttribute(attributeName = "firstName")
     private String firstName;
 
-    @DynamoDBAttribute(attributeName = "lastName")
     private String lastName;
 
-    @DynamoDBAttribute(attributeName = "timeZone")
     private String timeZone;
 
-    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "createdAt_status_index",attributeName = "status")
-    @DynamoDBAttribute(attributeName = "status")
     private String status;
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "createdAt_status_index",attributeName = "createdAt")
-    @DynamoDBAttribute(attributeName = "createdAt")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "organizationId_createdAt_index")
     private String createdAt;
 
-    @DynamoDBAttribute(attributeName = "updatedAt")
     private String updatedAt;
 }

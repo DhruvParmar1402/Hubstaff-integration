@@ -13,40 +13,42 @@ import lombok.ToString;
 
 @DynamoDBTable(tableName = "Activities")
 public class Activity {
-    @DynamoDBHashKey(attributeName = "userId")
+    @DynamoDBHashKey
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "userId_appName_index")
     private Long userId;
 
-    @DynamoDBRangeKey(attributeName = "activityId")
+    @DynamoDBRangeKey
     private Long activityId;
 
-    @DynamoDBAttribute(attributeName = "organizationId")
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "organizationId_appName_index",attributeName = "organizationId")
+    @DynamoDBAttribute
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "organizationId_createdAt_index")
     private Long organizationId;
 
-    @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"projectId_appName_index", "organizationId_appName_index"}, attributeName = "appName")
-    @DynamoDBAttribute(attributeName = "appName")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"projectId_appName_index","userId_appName_index"})
+    @DynamoDBAttribute
     private String appName;
 
-    @DynamoDBAttribute(attributeName = "date")
+    @DynamoDBAttribute
     private String date;
 
-    @DynamoDBAttribute(attributeName = "createdAt")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "organizationId_createdAt_index")
+    @DynamoDBAttribute
     private String createdAt;
 
-    @DynamoDBAttribute(attributeName = "updatedAt")
+    @DynamoDBAttribute
     private String updatedAt;
 
-    @DynamoDBAttribute(attributeName = "taskId")
+    @DynamoDBAttribute
     private Long taskId;
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "projectId_appName_index",attributeName = "projectId")
-    @DynamoDBAttribute(attributeName = "projectId")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "projectId_appName_index")
+    @DynamoDBAttribute
     private Long projectId;
 
-    @DynamoDBAttribute(attributeName = "tracked")
+    @DynamoDBAttribute
     private Integer tracked;
 
-    @DynamoDBAttribute(attributeName = "activations")
+    @DynamoDBAttribute
     private Integer activations;
 }
 

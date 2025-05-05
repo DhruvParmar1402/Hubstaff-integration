@@ -8,22 +8,24 @@ import java.util.function.Function;
 public class CollectionsUtil<T> {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-    private static final ZoneId zone = ZoneId.systemDefault();
 
     public List<T> filterFromPreviousDay(List<T> list, Function<T, String> createdAtExtractor) {
-        LocalDate yesterday = LocalDate.now(zone).minusDays(1);
-        Instant startOfDay = yesterday.atStartOfDay(zone).toInstant();
-        Instant endOfDay = yesterday.atTime(23, 59, 59).atZone(zone).toInstant();
 
+        Instant startOfDay=DateUtil.startOfPreviousDay();
+        Instant endOfDay=DateUtil.endOfPreviousDay();
+        ZoneId zone=DateUtil.getZoneId();
         return list.stream()
                 .filter(item -> {
                     try {
                         String createdAtStr = createdAtExtractor.apply(item);
                         if (createdAtStr == null) return false;
 
-                        Instant createdAt = LocalDateTime.parse(createdAtStr, formatter)
+                        String trimmedTimed=createdAtStr.substring(0,19);
+
+                        Instant createdAt = LocalDateTime.parse(trimmedTimed, formatter)
                                 .atZone(zone)
                                 .toInstant();
+
                         return !createdAt.isBefore(startOfDay) && !createdAt.isAfter(endOfDay);
                     } catch (Exception e) {
                         return false;

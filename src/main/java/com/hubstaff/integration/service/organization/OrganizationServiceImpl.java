@@ -9,6 +9,7 @@ import com.hubstaff.integration.repository.OrganizationRepository;
 import com.hubstaff.integration.service.token.TokenService;
 import com.hubstaff.integration.service.token.TokenServiceImpl;
 import com.hubstaff.integration.util.CollectionsUtil;
+import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ObjectUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,24 +36,27 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Value("${fetch.organization.url}")
     private String fetchOrganizationUrl;
 
-    private TokenService tokenServiceImpl;
+    private TokenService tokenService;
     private ModelMapper mapper;
     private RestTemplate restTemplate;
     private OrganizationRepository organizationRepository;
-    private final CollectionsUtil<OrganizationDTO> util = new CollectionsUtil<>();
+    private final MessageSourceImpl messageSource;
 
-    public OrganizationServiceImpl(TokenServiceImpl tokenServiceImpl, ModelMapper modelMapper, RestTemplate restTemplate, OrganizationRepository organizationRepository)
+    public OrganizationServiceImpl(TokenServiceImpl tokenService, ModelMapper modelMapper, RestTemplate restTemplate, OrganizationRepository organizationRepository,MessageSourceImpl messageSource)
     {
-        this.tokenServiceImpl = tokenServiceImpl;
+        this.tokenService = tokenService;
         this.mapper=modelMapper;
         this.restTemplate=restTemplate;
         this.organizationRepository=organizationRepository;
+        this.messageSource=messageSource;
     }
 
     public void fetchAndSave() throws EntityNotFound {
-        String token = tokenServiceImpl.getAccessToken();
+        String token = tokenService.getAccessToken();
+        CollectionsUtil<OrganizationDTO> util = new CollectionsUtil<>();
+
         if (ObjectUtil.isNullOrEmpty(token)) {
-            throw new ExternalApiException("Access token is null or empty", 401, null);
+            throw new ExternalApiException("token.not.exists", 401, null);
         }
 
         HttpHeaders headers=new HttpHeaders();
@@ -60,7 +64,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
         ResponseEntity<OrganizationResponse> response;
-
+        tokenService.refreshToken();
         try {
             response = restTemplate.exchange(
                     baseUrl + fetchOrganizationUrl,
@@ -70,11 +74,11 @@ public class OrganizationServiceImpl implements OrganizationService {
             );
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new ExternalApiException("Hubstaff API error: " + e.getStatusText(), e.getStatusCode().value(), e);
+            throw new ExternalApiException(messageSource.getMessage("Hubstaff.api.error") + e.getStatusText(), e.getStatusCode().value(), e);
         } catch (ResourceAccessException e) {
-            throw new ExternalApiException("Failed to connect to Hubstaff API", 503, e);
+            throw new ExternalApiException("failed.to.connectHubstaff", 503, e);
         } catch (Exception e) {
-            throw new ExternalApiException("Unexpected error while calling Hubstaff API", 500, e);
+            throw new ExternalApiException("Hubstaff.unexpected.error", 500, e);
         }
 
         OrganizationResponse body = response.getBody();

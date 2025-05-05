@@ -14,6 +14,7 @@ import java.util.Map;
 public class ActivityRepository {
 
     private final DynamoDBMapper repo;
+
     public ActivityRepository(DynamoDBMapper repo)
     {
         this.repo=repo;
@@ -23,9 +24,9 @@ public class ActivityRepository {
         repo.save(activity);
     }
 
-    public List<Activity> getTotalTimeSpentOnApp(Long userId, String appName) {
+    public List<Activity> getTotalTimeSpentOnApp(Integer userId, String appName) {
         Map<String , AttributeValue> eav=new HashMap<>();
-        eav.put(":userId",new AttributeValue().withN(Long.toString(userId)));
+        eav.put(":userId",new AttributeValue().withN(Integer.toString(userId)));
         eav.put(":appName",new AttributeValue().withS(appName));
 
         DynamoDBQueryExpression<Activity> expression=new DynamoDBQueryExpression<Activity>()
@@ -59,6 +60,22 @@ public class ActivityRepository {
                 .withKeyConditionExpression("organizationId = :organizationId AND appName=:appName")
                 .withExpressionAttributeValues(eav)
                 .withConsistentRead(false);
+        return repo.query(Activity.class,expression);
+    }
+
+    public List<Activity> getMonthActivity(Integer organizationId, String startOfMonth, String endOfMonth)
+    {
+        Map<String , AttributeValue> eav=new HashMap<>();
+        eav.put(":organizationId",new AttributeValue().withN(Long.toString(organizationId)));
+        eav.put(":startDate",new AttributeValue().withS(startOfMonth));
+        eav.put(":endDate", new AttributeValue().withS(endOfMonth));
+
+        DynamoDBQueryExpression<Activity> expression=new DynamoDBQueryExpression<Activity>()
+                .withIndexName("organizationId_createdAt_index")
+                .withKeyConditionExpression("organizationId = :organizationId AND createdAt BETWEEN :startDate AND :endDate")
+                .withExpressionAttributeValues(eav)
+                .withConsistentRead(false);
+
         return repo.query(Activity.class,expression);
     }
 }

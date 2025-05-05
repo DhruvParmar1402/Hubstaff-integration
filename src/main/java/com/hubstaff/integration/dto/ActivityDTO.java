@@ -15,7 +15,7 @@ public class ActivityDTO {
 
     @JsonProperty("user_id")
     @NotNull(message = "{activity.userId.null}",groups = Groups.FetchActivityByUser.class)
-    private Long userId;
+    private Integer userId;
 
     @JsonProperty("id")
     private Long activityId;

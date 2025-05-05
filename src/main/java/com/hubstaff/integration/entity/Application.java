@@ -10,14 +10,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @DynamoDBTable(tableName = "Applications")
 public class Application {
-    @DynamoDBHashKey(attributeName = "userId")
+    @DynamoDBHashKey
     private Integer userId;
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "organizationId_appName_index",attributeName = "organizationId")
-    @DynamoDBAttribute(attributeName = "organizationId")
+    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"organizationId_addedAt_index","organizationId_lastUsedAt_index"})
+    @DynamoDBAttribute
     private Integer organizationId;
 
-    @DynamoDBRangeKey(attributeName = "appName")
-    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "organizationId_appName_index",attributeName = "appName")
+    @DynamoDBRangeKey
     private String appName;
+
+    @DynamoDBAttribute
+    @DynamoDBIndexRangeKey(globalSecondaryIndexNames = "organizationId_addedAt_index")
+    private String addedAt;
+
+    @DynamoDBAttribute
+    @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"organizationId_lastUsedAt_index"})
+    private String lastUsedAt;
 }

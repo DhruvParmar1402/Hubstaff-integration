@@ -5,6 +5,7 @@ import com.hubstaff.integration.entity.Integration;
 import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.exception.ExternalApiException;
 import com.hubstaff.integration.repository.TokenRepository;
+import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ObjectUtil;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -56,13 +57,15 @@ public class TokenServiceImpl implements TokenService {
     private final RestTemplate restTemplate;
     private final TokenRepository tokenRepository;
     private final ModelMapper mapper;
+    private final MessageSourceImpl messageSource;
     private final Logger logger= LoggerFactory.getLogger(TokenServiceImpl.class);
 
-    public TokenServiceImpl(RestTemplate restTemplate, TokenRepository tokenRepository, ModelMapper modelMapper)
+    public TokenServiceImpl(RestTemplate restTemplate, TokenRepository tokenRepository, ModelMapper modelMapper, MessageSourceImpl messageSource)
     {
         this.restTemplate=restTemplate;
         this.tokenRepository=tokenRepository;
         this.mapper=modelMapper;
+        this.messageSource=messageSource;
     }
 
     public void getCode() {
@@ -91,7 +94,6 @@ public class TokenServiceImpl implements TokenService {
 
     public IntegrationDTO getTokens(String code) {
 
-
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", accessTokenObtainGrantType);
         formData.add("code", code);
@@ -108,9 +110,9 @@ public class TokenServiceImpl implements TokenService {
         try {
             response = restTemplate.postForEntity(tokenUrl, request, TokenDTO.class);
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new ExternalApiException("Hubstaff API error: " + e.getStatusText(), e.getStatusCode().value(), e);
+            throw new ExternalApiException(messageSource.getMessage("Hubstaff.api.error") + e.getStatusText(), e.getStatusCode().value(), e);
         } catch (ResourceAccessException e) {
-            throw new ExternalApiException("Failed to connect to Hubstaff API", 503, e);
+            throw new ExternalApiException("failed.to.connectHubstaff", 503, e);
         }
 
         Integration entity=mapper.map(response.getBody(), Integration.class);
@@ -181,11 +183,11 @@ public class TokenServiceImpl implements TokenService {
             response = restTemplate.postForEntity(tokenUrl, request, TokenDTO.class);
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new ExternalApiException("Hubstaff API error: " + e.getStatusText(), e.getStatusCode().value(), e);
+            throw new ExternalApiException(messageSource.getMessage("Hubstaff.api.error") + e.getStatusText(), e.getStatusCode().value(), e);
         } catch (ResourceAccessException e) {
-            throw new ExternalApiException("Failed to connect to Hubstaff API", 503, e);
+            throw new ExternalApiException("failed.to.connectHubstaff", 503, e);
         } catch (Exception e) {
-            throw new ExternalApiException("Unexpected error while calling Hubstaff API", 500, e);
+            throw new ExternalApiException("Hubstaff.unexpected.error", 500, e);
         }
 
         Integration entity=mapper.map(response.getBody(), Integration.class);

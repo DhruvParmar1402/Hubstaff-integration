@@ -1,6 +1,7 @@
 package com.hubstaff.integration.controller;
 
 import com.hubstaff.integration.dto.UserDTO;
+import com.hubstaff.integration.service.user.UserService;
 import com.hubstaff.integration.service.user.UserServiceImpl;
 import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ResponseHandler;
@@ -16,29 +17,48 @@ import java.util.List;
 @RequestMapping("/users")
 public class UserController {
 
-    private final UserServiceImpl userServiceImpl;
+    private final UserService userService;
     private final MessageSourceImpl messageSource;
 
-    public UserController(UserServiceImpl userServiceImpl, MessageSourceImpl messageSource)
+    public UserController(UserServiceImpl userService, MessageSourceImpl messageSource)
     {
-        this.userServiceImpl = userServiceImpl;
+        this.userService = userService;
         this.messageSource=messageSource;
     }
 
-    @GetMapping("/{organizationName}")
-    public ResponseEntity<?> getUsers (@PathVariable String organizationName)
+    @GetMapping("/{organizationId}")
+    public ResponseEntity<?> getUsers (@PathVariable Integer organizationId)
     {
         ResponseHandler<List<UserDTO>> response;
         try {
-            List<UserDTO>users= userServiceImpl.getUsers(organizationName);
+            List<UserDTO>users= userService.getUsers(organizationId);
             response=new ResponseHandler<>(users,messageSource.getMessage("users.fetched.success"), HttpStatus.OK,true);
             return ResponseEntity.ok(response);
         }
         catch (Exception e)
         {
             log.error(e.getMessage());
-            response=new ResponseHandler<>(null,e.getMessage(), HttpStatus.BAD_REQUEST,false);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            response=new ResponseHandler<>(null,e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR,false);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+//    6
+    @GetMapping("/new/{organizationId}")
+    public ResponseEntity<?> getNewUsers(@PathVariable Long organizationId)
+    {
+        ResponseHandler<List<UserDTO>> response;
+        try {
+            List<UserDTO> users=userService.getNewUsers(organizationId);
+            response=new ResponseHandler<>(users,messageSource.getMessage("user.fetch.success"),HttpStatus.OK,true);
+            return ResponseEntity.ok(response);
+        }
+        catch (Exception e)
+        {
+            log.error(e.getMessage());
+            response=new ResponseHandler<>(null,e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR,false);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 }

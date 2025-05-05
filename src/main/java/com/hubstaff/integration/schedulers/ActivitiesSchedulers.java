@@ -18,7 +18,8 @@ public class ActivitiesSchedulers {
         this.activityServiceImpl = activityServiceImpl;
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
+//    @Scheduled(cron = "0 0 0 * * *")
+//    @Scheduled(fixedRate = 5000)
     public void fetchAndSaveActivities() throws EntityNotFound {
         logger.info("Application activity schedulers executed.");
         activityServiceImpl.fetchAndSaveActivities();
