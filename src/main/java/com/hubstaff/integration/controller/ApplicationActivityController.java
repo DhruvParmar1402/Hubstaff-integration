@@ -1,11 +1,8 @@
 package com.hubstaff.integration.controller;
 
-import com.hubstaff.integration.dto.AppsWithTrendResponse;
-import com.hubstaff.integration.dto.TrendOfTopFiveApps;
+import com.hubstaff.integration.dto.*;
 import com.hubstaff.integration.service.activity.ActivityService;
 import com.hubstaff.integration.validations.Groups;
-import com.hubstaff.integration.dto.ActivityDTO;
-import com.hubstaff.integration.dto.ApplicationActivityDTO;
 import com.hubstaff.integration.service.activity.ActivityServiceImpl;
 import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ResponseHandler;
@@ -16,7 +13,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -87,9 +83,9 @@ public class ApplicationActivityController{
     @GetMapping("/mostActiveUser/{organizationId}")
     public ResponseEntity<?> getMostActive(@PathVariable Integer organizationId)
     {
-        ResponseHandler<List<Map.Entry<Long , Integer>>> response;
+        ResponseHandler<List<ActiveUserResponse>> response;
         try {
-            List<Map.Entry<Long, Integer>> users=activityService.getMostActiveUsers(organizationId);
+            List<ActiveUserResponse> users=activityService.getMostActiveUsers(organizationId);
             response=new ResponseHandler<>(users,messageSource.getMessage("mostActive.fetched.success"),HttpStatus.OK,true);
             return ResponseEntity.ok(response);
         }
@@ -123,9 +119,9 @@ public class ApplicationActivityController{
     @GetMapping("/appsUsed/{organizationId}")
     public ResponseEntity<?> getAppUsedThisMonthWithTrend(@PathVariable Integer organizationId)
     {
-        ResponseHandler<AppsWithTrendResponse> response;
+        ResponseHandler<List<AppsWithTrendResponse>> response;
         try {
-            AppsWithTrendResponse appsWithTrendResponse=activityService.getAppUsedThisMonthWithTrend(organizationId);
+            List<AppsWithTrendResponse> appsWithTrendResponse=activityService.getAppUsedThisMonthWithTrend(organizationId);
             response=new ResponseHandler<>(appsWithTrendResponse,messageSource.getMessage("apps.fetched.success"),HttpStatus.OK,true);
             return ResponseEntity.ok(response);
         } catch (Exception e) {

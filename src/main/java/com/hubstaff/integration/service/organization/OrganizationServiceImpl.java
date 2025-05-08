@@ -11,6 +11,7 @@ import com.hubstaff.integration.service.token.TokenServiceImpl;
 import com.hubstaff.integration.util.CollectionsUtil;
 import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -27,6 +28,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class OrganizationServiceImpl implements OrganizationService {
 
@@ -52,6 +54,9 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     public void fetchAndSave() throws EntityNotFound {
+        log.info("Organization scheduler executed.");
+
+        tokenService.refreshToken();
         String token = tokenService.getAccessToken();
         CollectionsUtil<OrganizationDTO> util = new CollectionsUtil<>();
 
@@ -64,7 +69,6 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
         ResponseEntity<OrganizationResponse> response;
-        tokenService.refreshToken();
         try {
             response = restTemplate.exchange(
                     baseUrl + fetchOrganizationUrl,

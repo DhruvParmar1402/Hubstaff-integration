@@ -13,6 +13,6 @@ public class ActivityResponse {
     @JsonProperty("daily_applications")
     private List<ActivityDTO> activities;
 
-    @JsonProperty("pagination.next_page_start_id")
-    private Long page;
+    @JsonProperty("pagination")
+    private Pagination page;
 }

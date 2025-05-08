@@ -3,6 +3,8 @@ package com.hubstaff.integration.controller;
 import com.hubstaff.integration.dto.ApplicationDTO;
 import java.util.Map;
 
+import com.hubstaff.integration.dto.NewAppsResponse;
+import com.hubstaff.integration.dto.Top5AppsThisMonthResponse;
 import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.service.application.ApplicationService;
 import com.hubstaff.integration.service.application.ApplicationServiceImpl;
@@ -57,9 +59,9 @@ public class ApplicationController {
     @GetMapping("/new/{organizationId}")
     public ResponseEntity<?> getNewApplications (@PathVariable Integer organizationId)
     {
-        ResponseHandler<List<String>> response;
+        ResponseHandler<List<NewAppsResponse>> response;
         try {
-            List<String> newApplications=applicationService.fetchNewApps(organizationId);
+            List<NewAppsResponse> newApplications=applicationService.fetchNewApps(organizationId);
             response=new ResponseHandler<>(newApplications,messageSource.getMessage("newApps.fetch.success"),HttpStatus.OK,true);
             return ResponseEntity.ok(response);
         }
@@ -75,10 +77,10 @@ public class ApplicationController {
     @GetMapping("/topFiveApps/{organizationId}")
     public ResponseEntity<?> getTopFiveApps(@PathVariable Integer organizationId)
     {
-        ResponseHandler<List<Map.Entry<String , Integer>>> response;
+        ResponseHandler<List<Top5AppsThisMonthResponse>> response;
         try
         {
-            List<Map.Entry<String,Integer>> applications=applicationService.getTopFiveApps(organizationId);
+            List<Top5AppsThisMonthResponse> applications=applicationService.getTopFiveApps(organizationId);
             response=new ResponseHandler<>(applications,messageSource.getMessage("activeApps.fetch.success"),HttpStatus.OK,true);
             return ResponseEntity.ok(response);
         }

@@ -25,24 +25,12 @@ public class Schedulers {
         this.userService=userService;
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
-    @Scheduled(fixedRate = 5000)
-    public void fetchAndSaveActivities() throws EntityNotFound {
-        log.info("Application activity schedulers executed.");
-        activityService.fetchAndSaveActivities();
-    }
-    @Scheduled(cron = "0 0 0 * * *")
-//    @Scheduled(fixedRate = 5000)
-    public void fetchAndSaveOrganizations() throws EntityNotFound {
-        log.info("Organization scheduler executed.");
-        organizationService.fetchAndSave();
-    }
-
-    @Scheduled(cron = "0 0 0 * * *")
-//    @Scheduled(fixedRate = 5000)
-    public void fetchAndSaveUsers() throws EntityNotFound {
-        log.info("User scheduler executed.");
-        userService.fetchAndSaveUsers();
+//    @Scheduled(cron = "0 0 0 * * *")
+//    @Scheduled(fixedRate = 10000)
+    public void fetchAndSaveData() throws EntityNotFound {
+//        activityService.fetchAndSaveActivities();
+//        organizationService.fetchAndSave();
+//        userService.fetchAndSaveUsers();
     }
 }
 

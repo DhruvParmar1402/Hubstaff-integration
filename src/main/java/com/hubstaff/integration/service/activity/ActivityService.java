@@ -1,9 +1,7 @@
 package com.hubstaff.integration.service.activity;
 
-import com.hubstaff.integration.dto.ActivityDTO;
-import com.hubstaff.integration.dto.ApplicationActivityDTO;
-import com.hubstaff.integration.dto.AppsWithTrendResponse;
-import com.hubstaff.integration.dto.TrendOfTopFiveApps;
+import com.hubstaff.integration.dto.*;
+import com.hubstaff.integration.entity.Activity;
 import com.hubstaff.integration.exception.EntityNotFound;
 
 import java.util.List;
@@ -15,7 +13,7 @@ public interface ActivityService {
     ApplicationActivityDTO getTotalTimeSpentOnAppByProject(ActivityDTO activityDTO);
     ApplicationActivityDTO getTotalTimeSpentOnAppByOrganization(ActivityDTO activityDTO);
     ApplicationActivityDTO getTotalTimeSpentOnApp(ActivityDTO activityDTO);
-    List<Map.Entry<Long, Integer>> getMostActiveUsers(Integer organizationId);
-    AppsWithTrendResponse getAppUsedThisMonthWithTrend(Integer organizationId) throws EntityNotFound;
+    List<ActiveUserResponse> getMostActiveUsers(Integer organizationId);
+    List<AppsWithTrendResponse> getAppUsedThisMonthWithTrend(Integer organizationId) throws EntityNotFound;
     List<TrendOfTopFiveApps> getTopFiveApps(Integer organizationId);
 }

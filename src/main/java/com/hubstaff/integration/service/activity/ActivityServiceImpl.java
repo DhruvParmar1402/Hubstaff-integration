@@ -6,6 +6,7 @@ import com.hubstaff.integration.entity.Activity;
 import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.exception.ExternalApiException;
 import com.hubstaff.integration.repository.ActivityRepository;
+import com.hubstaff.integration.repository.LastEvaluatedRepository;
 import com.hubstaff.integration.service.application.ApplicationService;
 import com.hubstaff.integration.service.application.ApplicationServiceImpl;
 import com.hubstaff.integration.service.organization.OrganizationService;
@@ -15,6 +16,7 @@ import com.hubstaff.integration.service.token.TokenServiceImpl;
 import com.hubstaff.integration.util.DateUtil;
 import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -29,6 +31,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
+@Slf4j
 @Service
 public class ActivityServiceImpl implements ActivityService {
     @Value("${base.api.url}")
@@ -47,8 +50,10 @@ public class ActivityServiceImpl implements ActivityService {
     private final RestTemplate restTemplate;
     private final ActivityRepository activityRepository;
     private final MessageSourceImpl messageSource;
+    private final LastEvaluatedRepository lastEvaluatedRepository;
+    private final String schedulerName="activity";
 
-    public ActivityServiceImpl(ModelMapper mapper, TokenServiceImpl tokenService, OrganizationServiceImpl organizationService, ApplicationServiceImpl applicationService, RestTemplate restTemplate, ActivityRepository activityRepository,MessageSourceImpl messageSource) {
+    public ActivityServiceImpl(ModelMapper mapper, TokenServiceImpl tokenService, OrganizationServiceImpl organizationService, ApplicationServiceImpl applicationService, RestTemplate restTemplate, ActivityRepository activityRepository,MessageSourceImpl messageSource,LastEvaluatedRepository lastEvaluatedRepository) {
         this.mapper = mapper;
         this.tokenService = tokenService;
         this.organizationService = organizationService;
@@ -56,14 +61,17 @@ public class ActivityServiceImpl implements ActivityService {
         this.restTemplate = restTemplate;
         this.activityRepository = activityRepository;
         this.messageSource=messageSource;
+        this.lastEvaluatedRepository=lastEvaluatedRepository;
     }
 
     public void fetchAndSaveActivities() throws EntityNotFound {
+        log.info("Application activity schedulers executed.");
         List<OrganizationDTO> organizations = organizationService.getOrganizations();
 
         String startFormatted=DateUtil.startOfPreviousDay().toString()+"&";
         String endFormatted=DateUtil.endOfPreviousDay().toString();
 
+        tokenService.refreshToken();
         String token = tokenService.getAccessToken();
 
         HttpHeaders headers = new HttpHeaders();
@@ -71,15 +79,13 @@ public class ActivityServiceImpl implements ActivityService {
 
         HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
 
-        tokenService.refreshToken();
-
         try {
             for (OrganizationDTO organization : organizations) {
-                Long page=null;
+                Long page=lastEvaluatedRepository.fetch(schedulerName,organization.getOrganizationId())==null?null:lastEvaluatedRepository.fetch("activity",organization.getOrganizationId()).getLastKey();
                 do {
                     String finalUrl = baseUrl + fetchOrganizationUrl + "/"
                             + organization.getOrganizationId().toString() + "/"
-                            + fetchActivityDaily + "?date[start]=" + startFormatted + "date[stop]=" + endFormatted +"&page_limit=20";
+                            + fetchActivityDaily + "?date[start]=" + startFormatted + "date[stop]=" + endFormatted+ "&page_limit=10";
 
                     if(page!=null)
                     {
@@ -99,13 +105,14 @@ public class ActivityServiceImpl implements ActivityService {
                     }
 
                     activities = response.getBody().getActivities();
-                    page=response.getBody().getPage()==null?null:response.getBody().getPage();
+                    page=response.getBody().getPage()==null?null:response.getBody().getPage().getPageStartId();
 
                     for (ActivityDTO activity : activities) {
                         activity.setOrganizationId(organization.getOrganizationId());
                         activityRepository.save(mapper.map(activity, Activity.class));
                         applicationService.save(mapper.map(activity, ApplicationDTO.class),activity);
                     }
+                    lastEvaluatedRepository.save(new LastEvaluated(schedulerName,organization.getOrganizationId(),page));
                 }while (page!=null);
             }
         } catch (HttpClientErrorException | HttpServerErrorException e) {
@@ -163,7 +170,7 @@ public class ActivityServiceImpl implements ActivityService {
         return new ApplicationActivityDTO("Total time spend by user "+userId+" on app "+appName+" is: "+totalTracked,totalTracked);
     }
 
-    public List<Map.Entry<Long, Integer>> getMostActiveUsers(Integer organizationId){
+    public List<ActiveUserResponse> getMostActiveUsers(Integer organizationId){
         String startDate=DateUtil.startOfCurrentMonth().toString();
         String endDate=DateUtil.endOfCurrentMonth().toString();
 
@@ -175,14 +182,18 @@ public class ActivityServiceImpl implements ActivityService {
         {
             map.merge(activity.getUserId(), activity.getTracked(), Integer::sum);
         }
-
-        return map.entrySet().stream()
+        ArrayList<ActiveUserResponse> users=new ArrayList<>();
+        List<Map.Entry<Long,Integer>> result=map.entrySet().stream()
                 .sorted(Map.Entry.<Long, Integer>comparingByValue().reversed())
-                .limit(5)
-                .toList();
+                .limit(5).toList();
+        for (Map.Entry<Long,Integer> row:result)
+        {
+            users.add(new ActiveUserResponse(row.getKey(),row.getValue()));
+        }
+        return users;
     }
 
-    public AppsWithTrendResponse getAppUsedThisMonthWithTrend(Integer organizationId) {
+    public List<AppsWithTrendResponse> getAppUsedThisMonthWithTrend(Integer organizationId) {
         String startDateOfPreviousMonth=DateUtil.startOfPreviousMonth().toString();
         String endDateOfPreviousMonth=DateUtil.endOfPreviousMonth().toString();
 
@@ -206,7 +217,10 @@ public class ActivityServiceImpl implements ActivityService {
         else {
             trend="DOWN";
         }
-        return new AppsWithTrendResponse(thisMonthApplications,trend);
+
+        List<AppsWithTrendResponse> result=new ArrayList<>();
+        result.add(new AppsWithTrendResponse(thisMonthApplications,trend));
+        return result;
     }
 
     public List<TrendOfTopFiveApps> getTopFiveApps(Integer organizationId)
@@ -268,7 +282,6 @@ public class ActivityServiceImpl implements ActivityService {
         }
         return result;
     }
-
 }
 
 

@@ -15,6 +15,7 @@ import com.hubstaff.integration.util.CollectionsUtil;
 import com.hubstaff.integration.util.DateUtil;
 import com.hubstaff.integration.util.MessageSourceImpl;
 import com.hubstaff.integration.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -30,6 +31,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -61,7 +63,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void fetchAndSaveUsers() throws EntityNotFound {
+        log.info("User scheduler executed.");
         List<OrganizationDTO> organizations = organizationService.getOrganizations();
+
+        tokenService.refreshToken();
         String token = tokenService.getAccessToken();
 
         if (ObjectUtil.isNullOrEmpty(organizations)) {
@@ -71,7 +76,6 @@ public class UserServiceImpl implements UserService {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
-        tokenService.refreshToken();
 
         try {
             Long page=null;

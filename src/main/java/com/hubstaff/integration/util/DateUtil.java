@@ -6,7 +6,7 @@ public class DateUtil {
     public static Instant startOfPreviousDay()
     {
         ZoneId zone = ZoneOffset.UTC;
-        LocalDate yesterday = LocalDate.now(zone).minusDays(14);
+        LocalDate yesterday = LocalDate.now(zone).minusDays(1);
         Instant startOfDay = yesterday.atStartOfDay(zone).toInstant();
         return startOfDay;
     }

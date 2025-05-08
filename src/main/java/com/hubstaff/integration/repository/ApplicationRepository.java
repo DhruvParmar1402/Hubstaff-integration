@@ -51,7 +51,7 @@ public class ApplicationRepository {
 
         DynamoDBQueryExpression<Application> expression=new DynamoDBQueryExpression<Application>()
                 .withIndexName("organizationId_addedAt_index")
-                .withKeyConditionExpression("organizationId = :organizationId AND addedAt BETWEEN :startDate AND :endDate")
+                    .withKeyConditionExpression("organizationId = :organizationId AND addedAt BETWEEN :startDate AND :endDate")
                 .withExpressionAttributeValues(eav)
                 .withConsistentRead(false);
 

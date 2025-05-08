@@ -2,6 +2,9 @@ package com.hubstaff.integration.service.application;
 
 import com.hubstaff.integration.dto.ActivityDTO;
 import com.hubstaff.integration.dto.ApplicationDTO;
+import com.hubstaff.integration.dto.NewAppsResponse;
+import com.hubstaff.integration.dto.Top5AppsThisMonthResponse;
+import com.hubstaff.integration.dto.Top5AppsThisMonthResponse;
 import com.hubstaff.integration.entity.Application;
 import com.hubstaff.integration.exception.EntityNotFound;
 import com.hubstaff.integration.repository.ApplicationRepository;
@@ -50,7 +53,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applications.stream().map(entity->mapper.map(entity, ApplicationDTO.class)).toList();
     }
 
-    public List<String> fetchNewApps(Integer organizationId) throws EntityNotFound {
+    public List<NewAppsResponse> fetchNewApps(Integer organizationId) throws EntityNotFound {
         String startOfThisMonth=DateUtil.startOfCurrentMonth().toString();
         String endOfThisMonth=DateUtil.endOfCurrentMonth().toString();
 
@@ -78,11 +81,11 @@ public class ApplicationServiceImpl implements ApplicationService {
         {
             throw new EntityNotFound("application.not.exists");
         }
-
-        return uniqueApplicationsThisMonth.stream().toList();
+        List<NewAppsResponse> newAppsResponses=uniqueApplicationsThisMonth.stream().map(appName-> new NewAppsResponse(appName)).toList();
+        return newAppsResponses;
     }
 
-    public List<Map.Entry<String , Integer>> getTopFiveApps(Integer organizationId) throws EntityNotFound {
+    public List<Top5AppsThisMonthResponse> getTopFiveApps(Integer organizationId) throws EntityNotFound {
         String startOfMonth=DateUtil.startOfCurrentMonth().toString();
         String endOfMonth=DateUtil.endOfCurrentMonth().toString();
 
@@ -107,11 +110,16 @@ public class ApplicationServiceImpl implements ApplicationService {
                 map.put(application.getAppName(),count+1);
             }
         }
-
-        return map.entrySet().stream()
+        List<Map.Entry<String, Integer>> entryList=map.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .limit(5)
                 .toList();
+        List<Top5AppsThisMonthResponse> result=new ArrayList<>();
+        for (Map.Entry<String, Integer>row:entryList)
+        {
+            result.add(new Top5AppsThisMonthResponse(row.getKey(), row.getValue()));
+        }
+        return result;
     }
 
     public List<String> getAppsUsedCurrentMonth (Integer organizationId)

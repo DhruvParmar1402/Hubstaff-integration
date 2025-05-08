@@ -4,12 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashSet;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AppsWithTrendResponse {
-    private HashSet<String> data;
-    private String trend;
+public class NewAppsResponse {
+    private String appName;
 }
